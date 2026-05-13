@@ -1,0 +1,18 @@
+numpy>=1.26
+scipy>=1.12
+polars>=1.0
+pandas>=2.2
+duckdb>=1.0
+statsmodels>=0.14
+
+# Dashboard
+streamlit>=1.30
+plotly>=5.18
+
+# Utils
+python-dotenv>=1.0
+pydantic>=2.5
+
+# Testing
+pytest>=7.4
+pytest-cov>=4.1
