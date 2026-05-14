@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest -q tests/ --maxfail=1 --disable-warnings
+
+      - name: Synthetic A/A smoke test (peek-safe FPR)
+        run: |
+          python <<'PY'
+          from pulselab.validate.synth_aa import run_synth_aa
+          r = run_synth_aa(n_experiments=300, per_arm_per_day=200, n_days=30, alpha=0.05, seed=0)
+          print(f"synth A/A: {r.n_false_positives} false stops in {r.n_experiments} runs (FPR={r.fpr:.3f}, α={r.target_alpha})")
+          assert r.passed, f"Empirical FPR {r.fpr:.3f} exceeds tolerance"
+          PY
