@@ -323,7 +323,7 @@ def main() -> None:
             )
             st.caption(
                 "**Why this matters:** with a standard t-test, peeking daily inflates "
-                "false-positive rate from ~5% to ~20–30%. mSPRT keeps it bounded by α."
+                "false-positive rate from about 5% to 20 or 30%. mSPRT keeps it bounded by α."
             )
 
 
