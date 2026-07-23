@@ -2,7 +2,7 @@
 
 A statistically rigorous experimentation platform. It includes a sample-size calculator, **always-valid sequential testing (mSPRT)** with peek-safe p-values, **CUPED variance reduction**, **Sample Ratio Mismatch detection**, **delta-method variance for ratio metrics**, and **Benjamini-Hochberg-controlled heterogeneous treatment effects**. This is the everyday analysis work of data analysts at companies like Meta, Airbnb, Netflix, and Stripe.
 
-![Synthetic A/A validation: empirical FPR stays below α](docs/screenshots/03_validate.png)
+![Synthetic A/A validation: empirical FPR stays below α](docs/screenshots/app_validate.jpg)
 
 > The demo above runs 500 bootstrapped **null** A/A experiments under daily peeking, with mSPRT as the stopping rule. Empirical FPR is 0.6% against a target α of 5%. A standard t-test peeking daily would climb to roughly 20 or 30%.
 
@@ -23,13 +23,6 @@ Run both locally:
 python -m http.server 8000 --directory site   # landing page at http://localhost:8000
 streamlit run dashboard/app.py                 # app at http://localhost:8501
 ```
-
-## Screens
-
-| | |
-|---|---|
-| ![Design](docs/screenshots/01_design.png) | ![Analyze](docs/screenshots/02_analyze.png) |
-| **Design**: sample-size calculator for proportions with power/α/lift sliders | **Analyze**: naive vs CUPED-adjusted effect side by side (about 49% CI shrinkage), SRM check, mSPRT verdict, and heterogeneous treatment effects |
 
 ## Why This Project
 
