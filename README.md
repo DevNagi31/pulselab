@@ -6,6 +6,24 @@ A statistically-rigorous experimentation platform: sample-size calculator, **alw
 
 > The killer demo above: 500 bootstrapped **null** A/A experiments under daily peeking, with mSPRT as the stopping rule. Empirical FPR = 0.6% against a target α = 5%. A standard t-test peeking daily would balloon to ~20–30%.
 
+## Frontend
+
+A marketing landing page introduces the product, and its buttons open the live app where you actually run experiments. The app carries the same theme plus a built-in walkthrough.
+
+![Landing page](docs/screenshots/site_landing.jpg)
+
+| | |
+|---|---|
+| ![App walkthrough](docs/screenshots/app_walkthrough.jpg) | ![App analyze](docs/screenshots/app_analyze.jpg) |
+| **Walkthrough** — a three-step guide (set parameters, design and analyze, prove it is peek-safe) with per-tab instructions | **Analyze** — mSPRT verdict, SRM check, naive vs CUPED effect, and per-segment heterogeneous treatment effects |
+
+Run both locally:
+
+```bash
+python -m http.server 8000 --directory site   # landing page at http://localhost:8000
+streamlit run dashboard/app.py                 # app at http://localhost:8501
+```
+
 ## Screens
 
 | | |

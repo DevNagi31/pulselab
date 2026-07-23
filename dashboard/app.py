@@ -1,4 +1,4 @@
-"""PulseLab Streamlit dashboard — experiment design, analysis, and verdict."""
+"""PulseLab Streamlit dashboard - experiment design, analysis, and verdict."""
 from __future__ import annotations
 
 import sys
@@ -21,24 +21,124 @@ from pulselab.data.synth import generate_experiment
 from pulselab.design.power import sample_size_for_proportions
 from pulselab.validate.synth_aa import run_synth_aa
 
-st.set_page_config(page_title="PulseLab", page_icon="📊", layout="wide")
+st.set_page_config(page_title="PulseLab", layout="wide")
+
+# ---- Theme: navy / teal / gold, Poppins + Inter, to match the PulseLab site ----
+THEME_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+:root{--navy:#1a2b4a;--teal:#3d9b8c;--teal-light:#5ec4b0;--gold:#e6c15a;--muted:#6b7a90;}
+.stApp{background:linear-gradient(160deg,#eef3f5 0%,#e8eef1 100%);}
+html, body, [class*="css"]{font-family:'Inter',sans-serif;color:#1a2b4a;}
+h1,h2,h3,h4{font-family:'Poppins',sans-serif !important;letter-spacing:-.5px;color:#1a2b4a;}
+section[data-testid="stSidebar"]{background:#ffffff;border-right:1px solid #d9e2e6;}
+section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3{
+  font-size:14px !important;text-transform:uppercase;letter-spacing:.8px;color:#1a2b4a;}
+.stButton>button{background:#1a2b4a;color:#fff;border:none;border-radius:9px;
+  font-weight:600;padding:10px 22px;font-family:'Inter',sans-serif;transition:transform .15s;}
+.stButton>button:hover{background:#26395c;color:#fff;transform:translateY(-1px);}
+.stTabs [data-baseweb="tab-list"]{gap:6px;border-bottom:1px solid #d9e2e6;}
+.stTabs [data-baseweb="tab"]{font-weight:600;color:#6b7a90;}
+.stTabs [aria-selected="true"]{color:#3d9b8c;}
+.stTabs [data-baseweb="tab-highlight"]{background:#3d9b8c;}
+[data-testid="stMetricValue"]{font-family:'Poppins',sans-serif;color:#1a2b4a;}
+[data-testid="stMetricDelta"]{color:#2f8f7f;}
+input[type=range]{accent-color:#3d9b8c;}
+.pl-brand{display:flex;align-items:center;gap:12px;margin-bottom:2px;}
+.pl-mark{width:40px;height:40px;border-radius:10px;background:#1a2b4a;display:flex;
+  align-items:center;justify-content:center;}
+.pl-name{font-family:'Poppins',sans-serif;font-weight:700;font-size:34px;letter-spacing:-1px;color:#1a2b4a;}
+.pl-badge{display:inline-block;font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;
+  padding:3px 10px;border-radius:20px;margin-right:8px;}
+</style>
+"""
+
+PL_HEADER = """
+<div class="pl-brand">
+  <span class="pl-mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    stroke="#5ec4b0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12h4l2 6 4-14 2 8h6"/></svg></span>
+  <span class="pl-name">PulseLab</span>
+</div>
+"""
+
+WALKTHROUGH = """
+<div style="background:#fff;border:1px solid #d9e2e6;border-radius:12px;
+  padding:20px 24px;margin:14px 0 26px;box-shadow:0 8px 24px rgba(26,43,74,.06);">
+  <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;
+    color:#1a2b4a;margin-bottom:14px;">How to use PulseLab</div>
+  <div style="display:flex;gap:18px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:190px;">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+        <span style="width:24px;height:24px;border-radius:7px;background:#1a2b4a;color:#fff;
+          font-family:'Poppins';font-weight:700;font-size:13px;display:flex;
+          align-items:center;justify-content:center;">1</span>
+        <b style="color:#1a2b4a;">Set parameters</b></div>
+      <div style="font-size:13.5px;color:#6b7a90;line-height:1.55;">
+        Use the sidebar on the left to set your sample size, baseline, effect, and stopping rule.</div>
+    </div>
+    <div style="flex:1;min-width:190px;">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+        <span style="width:24px;height:24px;border-radius:7px;background:#3d9b8c;color:#fff;
+          font-family:'Poppins';font-weight:700;font-size:13px;display:flex;
+          align-items:center;justify-content:center;">2</span>
+        <b style="color:#1a2b4a;">Design and analyze</b></div>
+      <div style="font-size:13.5px;color:#6b7a90;line-height:1.55;">
+        Size the test on the Design tab, then run a synthetic experiment on the Analyze tab
+        to see the mSPRT verdict, CUPED effect, SRM check, and per-segment lift.</div>
+    </div>
+    <div style="flex:1;min-width:190px;">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+        <span style="width:24px;height:24px;border-radius:7px;background:#e6c15a;color:#1a2b4a;
+          font-family:'Poppins';font-weight:700;font-size:13px;display:flex;
+          align-items:center;justify-content:center;">3</span>
+        <b style="color:#1a2b4a;">Prove it is peek-safe</b></div>
+      <div style="font-size:13.5px;color:#6b7a90;line-height:1.55;">
+        On the Synthetic A/A tab, run many null experiments with daily peeking and confirm
+        the empirical false-positive rate stays at or below your alpha.</div>
+    </div>
+  </div>
+</div>
+"""
 
 
 def render_verdict(label: str, ok: bool, detail: str) -> None:
-    color = "#0a7c2f" if ok else "#a8322a"
-    icon = "✅" if ok else "⚠️"
+    accent = "#3d9b8c" if ok else "#c98a2a"
+    bg = "#f2f8f6" if ok else "#fbf6ec"
+    tag = "PASS" if ok else "CHECK"
     st.markdown(
-        f"<div style='padding:10px 14px;border-left:4px solid {color};background:#f7f7f7;'>"
-        f"<b>{icon} {label}</b> &nbsp; <span style='color:#444'>{detail}</span></div>",
+        f"<div style='padding:12px 16px;border-left:4px solid {accent};background:{bg};"
+        f"border-radius:8px;margin-bottom:12px;'>"
+        f"<span class='pl-badge' style='background:{accent};color:#fff;'>{tag}</span>"
+        f"<b>{label}</b> &nbsp; <span style='color:#41506b'>{detail}</span></div>",
         unsafe_allow_html=True,
     )
 
 
+SITE_URL = "http://localhost:8000"
+
+BACK_LINK = f"""
+<a href="{SITE_URL}" style="display:inline-flex;align-items:center;gap:7px;
+  font-size:14px;font-weight:600;color:#1a2b4a;text-decoration:none;
+  border:1px solid #d9e2e6;background:#fff;border-radius:9px;padding:8px 14px;
+  margin-bottom:14px;">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3d9b8c"
+    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  Back to home
+</a>
+"""
+
+
 def main() -> None:
-    st.title("📊 PulseLab")
+    st.markdown(THEME_CSS, unsafe_allow_html=True)
+    st.markdown(BACK_LINK, unsafe_allow_html=True)
+    st.markdown(PL_HEADER, unsafe_allow_html=True)
     st.caption("A/B testing with always-valid sequential testing, CUPED, SRM detection, and causal HTE")
+    st.markdown(WALKTHROUGH, unsafe_allow_html=True)
 
     with st.sidebar:
+        st.caption("Set your experiment parameters here, then use the tabs on the right.")
         st.header("Experiment Design")
         n_per_arm = st.number_input("Sample size per arm", 100, 100_000, 5_000, step=500)
         baseline = st.number_input("Baseline metric mean", 0.001, 100.0, 4.81)
@@ -52,10 +152,12 @@ def main() -> None:
         tau2 = st.slider("mSPRT prior variance τ²", 0.1, 5.0, 1.0, 0.1)
 
     tab_design, tab_results, tab_validate = st.tabs(
-        ["🎯 Design", "📈 Analyze", "🧪 Synthetic A/A Validation"]
+        ["Design", "Analyze", "Synthetic A/A Validation"]
     )
 
     with tab_design:
+        st.caption("Step 1: enter your baseline rate and the lift you want to detect. "
+                   "PulseLab returns how many users per arm you need.")
         st.subheader("Sample-size calculator (proportions)")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -69,12 +171,14 @@ def main() -> None:
             st.metric("Per-arm sample size", f"{result.per_arm_n:,}")
             st.caption(
                 f"To detect a {lift:.3f} absolute lift on a {base_rate:.1%} baseline at "
-                f"α={alpha:.2f}, power={power:.0%} — total {result.total_n:,}."
+                f"α={alpha:.2f}, power={power:.0%} - total {result.total_n:,}."
             )
         except ValueError as e:
             st.error(str(e))
 
     with tab_results:
+        st.caption("Step 2: click the button to generate a synthetic experiment from your "
+                   "sidebar settings and read the verdict, CUPED effect, SRM check, and segment lift.")
         if st.button("Generate synthetic experiment + analyze", type="primary"):
             with st.spinner("Generating synthetic data and running analysis..."):
                 exp = generate_experiment(
@@ -116,15 +220,15 @@ def main() -> None:
 
             st.subheader("Verdict")
             verdict_text = (
-                "Reject H₀ — ship treatment"
+                "Reject H₀ - ship treatment"
                 if snap.reject_null(alpha=alpha)
-                else "Fail to reject H₀ — no significant effect yet"
+                else "Fail to reject H₀ - no significant effect yet"
             )
             render_verdict(
                 f"mSPRT (always-valid)",
                 snap.reject_null(alpha=alpha),
                 f"effect={snap.mean_diff:+.4f}, p={snap.p_value:.4f}, "
-                f"CI [{snap.ci_low:+.4f}, {snap.ci_high:+.4f}] — {verdict_text}",
+                f"CI [{snap.ci_low:+.4f}, {snap.ci_high:+.4f}] - {verdict_text}",
             )
             render_verdict(
                 "Sample Ratio Mismatch check",
@@ -158,7 +262,7 @@ def main() -> None:
                         "lift": e.effect,
                         "p_value": e.p_value,
                         "p_adjusted (BH)": e.p_adjusted,
-                        "significant": "✅" if e.significant else "—",
+                        "significant": "yes" if e.significant else "no",
                         "n_control": e.n_control,
                         "n_treatment": e.n_treatment,
                     }
@@ -187,9 +291,11 @@ def main() -> None:
             st.plotly_chart(fig, use_container_width=True)
 
     with tab_validate:
+        st.caption("Step 3: set the number of null experiments and click Run to prove that "
+                   "peeking stays safe under the mSPRT stopping rule.")
         st.markdown(
             "Runs **N null A/A experiments with daily peeking** under the mSPRT "
-            "stopping rule. If the math is right, empirical FPR ≤ α — peeking is safe."
+            "stopping rule. If the math is right, empirical FPR ≤ α - peeking is safe."
         )
         col1, col2, col3 = st.columns(3)
         with col1:
